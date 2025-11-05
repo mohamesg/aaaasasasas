@@ -1,0 +1,70 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.fighter_doctors_pdf">
+
+    <!-- 
+      - PERMISSIONS FIXED -
+      - Removed READ/WRITE_EXTERNAL_STORAGE and requestLegacyExternalStorage.
+      - Why? The 'file_picker' package uses a modern Android API (the Storage
+      - Access Framework) that does NOT require these permissions. The user
+      - grants access via a system file dialog instead.
+      -
+      - Removed FINE and COARSE LOCATION.
+      - Why? A PDF app should not need user location. Asking for it is
+      - suspicious to users and Google Play. If you have a *very* specific
+      - feature that needs location, you can add them back.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+
+    <application
+        android:name="${applicationName}"
+        android:label="Fighter Doctors PDF"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="false"
+        android:allowBackup="true"
+        android:supportsRtl="true">
+        <!-- Removed 'android:requestLegacyExternalStorage="true"' -->
+
+        <!-- Main Activity (New Flutter v2 embedding) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Important: Required for Flutter v2 embedding -->
+        <meta-data
+            android:name="io.flutter.embedding.android.NormalTheme"
+            android:resource="@style/NormalTheme" />
+        <meta-data
+            android:name="io.flutter.embedding.android.SplashScreenDrawable"
+            android:resource="@drawable/launch_background" />
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+
+        <!-- 
+          - File Provider for secure file sharing
+          - This is still good to have, especially if you use 'share_plus'
+          - to share files generated *by* your app.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true"> <!-- Added grantUriPermissions -->
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+</manifest>
