@@ -120,34 +120,35 @@ class _HomePageState extends State<HomePage> {
       final String originalPath = result.files.single.path!;
       provider.setStatus('جاري فتح محرر PDF...');
 
+      // --- START OF FIX ---
       // Open PDF editor with annotations
-      final String? editedPath = await FlutterPdfAnnotations.openPDF(
+      // We only await the function, we don't assign its (void) result
+      await FlutterPdfAnnotations.openPDF(
         filePath: originalPath,
         savePath: originalPath.replaceAll('.pdf', '_edited.pdf'),
         onFileSaved: (savedPath) {
+          // This callback runs when the native editor saves and closes.
           if (savedPath != null && mounted) {
-            provider.setPdfPath(savedPath);
+            provider.setPdfPath(savedPath); // Set the path to the *newly saved* file
             provider.setStatus('تم تحرير الملف بنجاح');
+            
+            // NOW, we navigate to our *viewer* screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PdfEditorScreen(
+                  pdfPath: savedPath, // Use the *correct* path from the callback
+                  provider: provider,
+                ),
+              ),
+            );
           }
         },
       );
-
-      if (editedPath != null && mounted) {
-        provider.setPdfPath(editedPath);
-        provider.setStatus('تم فتح محرر PDF');
-        
-        if (mounted) {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PdfEditorScreen(
-                pdfPath: editedPath,
-                provider: provider,
-              ),
-            ),
-          );
-        }
-      }
+      
+      // The old "if (editedPath != null...)" block has been deleted
+      // as its logic is now correctly placed inside the onFileSaved callback.
+      // --- END OF FIX ---
 
       provider.setLoading(false);
     } catch (e) {
@@ -289,9 +290,11 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       padding: const EdgeInsets.all(30),
                       child: Image.asset(
-                        'assets/images/app_logo.png',
+                        'assets/images/app_logo.png', // Make sure this asset exists in pubspec.yaml
                         height: 100,
                         width: 100,
+                        errorBuilder: (context, error, stackTrace) => 
+                          Icon(Icons.picture_as_pdf, size: 100, color: Colors.blue.shade700),
                       ),
                     ),
 
@@ -620,9 +623,13 @@ class ShareScreen extends StatelessWidget {
       final encryptedFile = XFile(encryptedPath);
       final pemFile = XFile(pemPath);
 
-      await SharePlus.instance.share(ShareParams(files: [encryptedFile, pemFile], 
+      // Use the modern Share.shareXFiles method
+      await Share.shareXFiles(
+        [encryptedFile, pemFile],
         subject: 'ملف PDF مشفر آمن',
-        text: 'ملف PDF مشفر بأمان. احتاج الملفين معاً لفتحه.'));
+        text: 'ملف PDF مشفر بأمان. احتاج الملفين معاً لفتحه.'
+      );
+
     } catch (e) {
       print('خطأ في المشاركة: $e');
     }
